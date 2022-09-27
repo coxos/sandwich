@@ -3,7 +3,6 @@ import Image from "next/image";
 import Layout from "../Componenets/Layout";
 import styled from "styled-components";
 import { NextPage } from "next";
-import { type } from "os";
 
 const Wrapper = styled.section`
   width: 100vw;
