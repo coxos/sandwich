@@ -3,6 +3,12 @@ import Image from "next/image";
 import Layout from "../Componenets/Layout";
 import styled from "styled-components";
 import { NextPage } from "next";
+//import { useDispatch, useSelector } from "react-redux";
+import { useEffect } from "react";
+import { State, sandwichListLoaded, getSandwiches } from "../store";
+import { sandwichGenerator } from "../assets/data/sandwichGenerator";
+import { useAppDispatch, useAppSelector } from "../hooks";
+import Pagination from "../Componenets/Pagination";
 
 const Wrapper = styled.section`
   width: 100vw;
@@ -64,12 +70,53 @@ const PriceText = styled.div`
   color: #a1a1a1;
 `;
 
-const sandwiches: NextPage = () => {
+const Sandwiches: NextPage = () => {
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    /*    dispatch(
+      sandwichListSlice.actions.sandwichListLoaded({
+        list: sandwichesData,
+        totalCount: 100,
+      })
+      );
+      */
+    /*    const getSandwichList = sandwichGenerator(100);
+
+    dispatch(
+      sandwichListLoaded({
+        list: getSandwichList,
+        totalCount: getSandwichList.length,
+      })
+    ); */
+
+    dispatch(getSandwiches(1));
+  }, [dispatch]);
+
+  const { sandwiches, isLoading } = useAppSelector(
+    (state: State) => state.sandwichList
+  );
+
+  const pageNumberClickHandler = (event: React.MouseEvent<HTMLElement>) => {
+    const domPageElement = event.target as HTMLElement;
+    dispatch(getSandwiches(+domPageElement.innerHTML));
+  };
+
+  if (isLoading) {
+    return (
+      <Layout>
+        <Wrapper>
+          <h1>Loading...</h1>
+        </Wrapper>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       <Wrapper>
         <SandwichList>
-          {sandwichesData.map(({ name, price, isvegan, image }) => (
+          {sandwiches?.map(({ name, price, isvegan, image }) => (
             <SandwichListLi key={name} vegan={isvegan}>
               <ImageWraper>
                 <Image src={image} alt={name} layout="fill" objectFit="cover" />
@@ -81,9 +128,10 @@ const sandwiches: NextPage = () => {
             </SandwichListLi>
           ))}
         </SandwichList>
+        <Pagination clickPage={pageNumberClickHandler} />
       </Wrapper>
     </Layout>
   );
 };
 
-export default sandwiches;
+export default Sandwiches;
