@@ -4,7 +4,7 @@ import { State } from "../store";
 import styled from "styled-components";
 
 type ActivePropType = {
-  active: boolean;
+  isActive: boolean;
 };
 
 const Wrapper = styled.ul`
@@ -21,37 +21,30 @@ const PageSelector = styled.li<ActivePropType>`
   padding: 10px 0;
   text-align: center;
   font-weight: 600;
-  color: ${({ active }) => (!active ? "darkslategray" : " white")};
-  background-color: ${({ active }) => (!active ? "white" : "#62c8c2")};
+  color: ${({ isActive }) => (!isActive ? "darkslategray" : " white")};
+  background-color: ${({ isActive }) => (!isActive ? "white" : "#62c8c2")};
   cursor: pointer;
 `;
 
-const Pagination = ({
-  clickPage,
-}: {
-  clickPage: (event: React.MouseEvent<HTMLElement>) => void;
-}) => {
+const Pagination = ({ clickPage }: { clickPage: (event: number) => void }) => {
   const { page, pageSize, totalItemCount } = useAppSelector(
     (state: State) => state.sandwichList
   );
 
-  const totalCount = totalItemCount !== null ? totalItemCount : 0;
-
-  if (totalCount === 0) {
-    return <div> null </div>;
-  }
-
+  const totalCount = totalItemCount as number;
   const allPage = Math.ceil(totalCount / pageSize);
 
   return (
     <Wrapper>
-      {Array.from(Array(allPage).keys()).map((p) => (
+      {Array.from(Array(allPage).keys()).map((index) => (
         <PageSelector
-          key={p}
-          active={page === p + 1 ? true : false}
-          onClick={clickPage}
+          key={index}
+          isActive={page === index + 1}
+          onClick={() => {
+            clickPage(index + 1);
+          }}
         >
-          {p + 1}
+          {index + 1}
         </PageSelector>
       ))}
     </Wrapper>

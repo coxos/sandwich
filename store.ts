@@ -1,4 +1,7 @@
 import {
+  AsyncThunk,
+  AsyncThunkOptions,
+  AsyncThunkPayloadCreator,
   configureStore,
   createAction,
   createAsyncThunk,
@@ -12,22 +15,35 @@ import {
   sandwichGenerator,
 } from "./assets/data/sandwichGenerator";
 
-export const getSandwiches = createAsyncThunk(
-  "sandwichList/getSandwiches",
-  async (page: number) => {
-    //const { pageSize } = thunkApi.getState().sandwichList as SandwichListState;
-    const data = await new Promise((resolve, reject) => {
-      setTimeout(() => {
-        resolve(getSandwichApi(page, 20));
-      }, 250);
-    });
-
-    return {
-      ...(data as { list: readonly Sandwich[]; totalCount: number }),
-      page: page,
-    } as { list: readonly Sandwich[]; totalCount: number; page: number };
+export const getSandwiches = createAsyncThunk<
+  {
+    sandwiches: readonly Sandwich[];
+    totalItemCount: number;
+    page: number;
+    SanwichesMaxPrice: number;
+  },
+  number,
+  {
+    dispatch: AppDispatch;
+    state: State;
   }
-);
+>("sandwichList/getSandwiches", async (page, thunkApi) => {
+  const { pageSize, filters } = thunkApi.getState().sandwichList;
+  const data = await new Promise((resolve, reject) => {
+    setTimeout(() => {
+      resolve(getSandwichApi(page, pageSize, filters));
+    }, 250);
+  });
+
+  return {
+    ...(data as {
+      sandwiches: readonly Sandwich[];
+      totalItemCount: number;
+      SanwichesMaxPrice: number;
+    }),
+    page: page,
+  };
+});
 
 export const sandwichListSlice = createSlice({
   name: "sandwichList",
@@ -37,6 +53,8 @@ export const sandwichListSlice = createSlice({
     pageSize: 20, // az összes szedvicsből mennyit jelenítünk meg az adott oldalon
     isLoading: true, // betöltés
     totalItemCount: null, // összes sandwich db
+    SanwichesMaxPrice: null,
+    filters: null, // egy olyan objektum ami tartalmazza a szűrési feltételeket
   } as SandwichListState,
   reducers: {
     sandwichListLoaded: (
@@ -48,6 +66,29 @@ export const sandwichListSlice = createSlice({
         sandwiches: action.payload.list,
         isLoading: false,
         totalItemCount: action.payload.totalCount,
+      };
+    },
+    setFIlters: (state, action: PayloadAction<SandwichFilters | null>) => {
+      console.log(action.payload);
+
+      let sName = action.payload?.searchSandwichName
+        ? action.payload?.searchSandwichName
+        : null;
+      let sPrice = action.payload?.price ? action.payload?.price : null;
+
+      if (sPrice === null && sName === null) {
+        return {
+          ...state,
+          filters: null,
+        };
+      }
+
+      return {
+        ...state,
+        filters: {
+          searchSandwichName: sName,
+          price: sPrice,
+        },
       };
     },
   },
@@ -63,17 +104,19 @@ export const sandwichListSlice = createSlice({
       (
         state,
         action: PayloadAction<{
-          list: readonly Sandwich[];
-          totalCount: number;
+          sandwiches: readonly Sandwich[];
+          totalItemCount: number;
           page: number;
+          SanwichesMaxPrice: number;
         }>
       ) => {
         return {
           ...state,
           page: action.payload.page,
-          sandwiches: action.payload.list,
+          sandwiches: action.payload.sandwiches,
           isLoading: false,
-          totalItemCount: action.payload.totalCount,
+          totalItemCount: action.payload.totalItemCount,
+          SanwichesMaxPrice: action.payload.SanwichesMaxPrice,
         };
       }
     );
@@ -94,19 +137,26 @@ export type Sandwich = {
   price: number;
 };
 
+export type SandwichFilters = {
+  searchSandwichName: string | null;
+  price: [number, number] | null;
+};
+
 export type SandwichListState = {
   page: number | null;
   sandwiches: readonly Sandwich[] | null;
   pageSize: 10 | 15 | 20 | 100;
   isLoading: boolean;
   totalItemCount: number | null;
+  filters: SandwichFilters | null;
+  SanwichesMaxPrice: number | null;
 };
 
 export type State = {
   sandwichList: SandwichListState;
 };
 
-export const { sandwichListLoaded } = sandwichListSlice.actions;
+export const { sandwichListLoaded, setFIlters } = sandwichListSlice.actions;
 
 export const store = configureStore({
   reducer: { [sandwichListSlice.name]: sandwichListSlice.reducer },

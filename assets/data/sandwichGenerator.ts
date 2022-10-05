@@ -1,4 +1,5 @@
-import { Sandwich } from "../../store";
+import { isNull } from "util";
+import { Sandwich, SandwichFilters } from "../../store";
 
 export const sandwichGenerator = (totalCount: number): Sandwich[] => {
   let randomId = () => Math.random().toString(36).substr(2);
@@ -30,15 +31,53 @@ const allSandwich: Sandwich[] = sandwichGenerator(
   Math.floor(Math.random() * 200 + 100)
 );
 
-export const getSandwichApi = (page: number, pageSize: number) => {
+export const getSandwichApi = (
+  page: number,
+  pageSize: number,
+  filters: SandwichFilters | null
+) => {
   const sartList = page === 1 ? 0 : (page - 1) * pageSize;
   const endList = page * pageSize;
 
-  const sandwiches = allSandwich.slice(sartList, endList);
-  //console.log(allSandwich, "allSanwich");
+  const maxPrice = allSandwich
+    .map(({ price }) => price)
+    .sort((a, b) => a - b)
+    .reverse()[0];
+
+  console.log(filters, "filters", !filters);
+
+  let filterName = "";
+  let filterMinPrice = 0;
+  let filterMaxPrice = 0;
+
+  if (filters) {
+    filterName = filters.searchSandwichName ? filters.searchSandwichName : "";
+    filterMinPrice = filters.price?.[0] ? filters.price?.[0] : 0;
+    filterMaxPrice = filters.price?.[1] ? filters.price?.[1] : maxPrice;
+  }
+
+  const filterAllSandwich = allSandwich.filter(
+    (sandwich) =>
+      sandwich.name.indexOf(filterName) > -1 &&
+      sandwich.price > filterMinPrice &&
+      sandwich.price <= filterMaxPrice
+  );
+
+  console.log(
+    filterAllSandwich,
+    "filterAllSandwich",
+    filterName,
+    filters,
+    "filter nem null??"
+  );
+
+  const sandwiches = !filters
+    ? allSandwich.slice(sartList, endList)
+    : filterAllSandwich.slice(sartList, endList);
 
   return {
-    list: sandwiches,
-    totalCount: allSandwich.length as number,
+    sandwiches,
+    totalItemCount: !filters ? allSandwich.length : filterAllSandwich.length,
+    SanwichesMaxPrice: maxPrice,
   };
 };

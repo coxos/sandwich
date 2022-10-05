@@ -9,6 +9,7 @@ import { State, sandwichListLoaded, getSandwiches } from "../store";
 import { sandwichGenerator } from "../assets/data/sandwichGenerator";
 import { useAppDispatch, useAppSelector } from "../hooks";
 import Pagination from "../Componenets/Pagination";
+import Filters from "../Componenets/Filters";
 
 const Wrapper = styled.section`
   width: 100vw;
@@ -97,9 +98,8 @@ const Sandwiches: NextPage = () => {
     (state: State) => state.sandwichList
   );
 
-  const pageNumberClickHandler = (event: React.MouseEvent<HTMLElement>) => {
-    const domPageElement = event.target as HTMLElement;
-    dispatch(getSandwiches(+domPageElement.innerHTML));
+  const pageNumberClickHandler = (pageNumber: number) => {
+    dispatch(getSandwiches(pageNumber));
   };
 
   if (isLoading) {
@@ -115,6 +115,7 @@ const Sandwiches: NextPage = () => {
   return (
     <Layout>
       <Wrapper>
+        <Filters />
         <SandwichList>
           {sandwiches?.map(({ name, price, isvegan, image }) => (
             <SandwichListLi key={name} vegan={isvegan}>
